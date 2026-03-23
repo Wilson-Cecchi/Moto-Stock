@@ -1,0 +1,39 @@
+/* includes/admin_extra.css — estilos extras usados nas páginas admin */
+
+/* User chip na sidebar */
+.user-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--surface3);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+.user-chip-name {
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--text2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 130px;
+}
+.user-chip-role {
+    font-size: .65rem;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+.user-avatar {
+    width: 28px;
+    height: 28px;
+    background: var(--accent-dim);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .75rem;
+    color: var(--accent);
+    flex-shrink: 0;
+}
