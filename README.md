@@ -8,8 +8,8 @@ Sistema web de apoio à decisão para previsão de demanda e gestão de estoque 
 
 ## 👥 Equipe
 
-- Bruna ...
-- Fernando ...
+- Bruna Vitoria de Oliveira Santos
+- Fernando Rafael Ramos
 - Wilson Klein Cecchi
 
 ---
