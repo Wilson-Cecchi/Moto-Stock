@@ -19,9 +19,9 @@ Sistema web de apoio à decisão para previsão de demanda e gestão de estoque 
 | Requisito | Status |
 |-----------|--------|
 | 1 matriz + 4 filiais | ✅ |
-| Mínimo 10 produtos por loja | ✅ 10 por loja (50 total) |
-| Mínimo 10 tipos de produtos | ✅ 5 categorias por loja |
-| Planejamento de 6 meses | ✅ Abr–Set 2025 |
+| Mínimo 100 produtos por loja | ✅ 100 por loja (500 total) |
+| Mínimo 10 tipos de produtos | ✅ 10 categorias por loja |
+| Planejamento de 6 meses | ✅ Abr–Set 2026 |
 | Planilha Excel | ✅ Exportação dinâmica pelo sistema |
 | Simulação ao vivo | ✅ Admin permite registrar vendas em tempo real |
 
@@ -59,6 +59,7 @@ motostock/
     |_ relatorio.php      ← Relatório imprimível / exportável como PDF
     |_ setup.sql          ← Banco de dados principal
     |_ setup_v2.sql       ← Tabelas de usuários e metas (rodar após setup.sql)
+    |_ setup_v3.sql       ← Tabela de solicitações e nível funcionário (rodar após setup_v2.sql)
     |_ setup_usuarios.php ← Cria usuários no banco (rodar 1x e deletar)
 ```
 
@@ -76,14 +77,15 @@ motostock/
 | Sistema | Caminho |
 |---------|---------|
 | Windows | `C:\xampp\htdocs\motostock\` |
-| macOS | `/Applications/XAMPP/htdocs/motostock/` |
-| Linux | `/opt/lampp/htdocs/motostock/` |
+| macOS   | `/Applications/XAMPP/htdocs/motostock/` |
+| Linux   | `/opt/lampp/htdocs/motostock/` |
 
 **2. Importar o banco de dados**
 
 - Abre `http://localhost/phpmyadmin`
 - Clica em **Importar** → seleciona `setup.sql` → **Executar**
 - Repete o processo com `setup_v2.sql` (cria tabelas `usuarios` e `metas`)
+- Repete o processo com `setup_v3.sql` (cria tabela `solicitacoes` e nível `funcionario`)
 
 **3. Criar os usuários**
 
@@ -122,14 +124,14 @@ http://localhost/motostock/login.php
 
 O sistema possui dois níveis de acesso. Todos os usuários entram pela mesma página de login.
 
-| Usuário    | Senha | Nível | Acesso  |                                         |
-|------------|---------------|---------|-----------------------------------------|
-| `admin`    | `umasenhaboa` | Admin   | Tudo + área administrativa              |
-| `gerente1` | `loja1234`    | Gerente | Somente Matriz — Centro                 |
-| `gerente2` | `loja1234`    | Gerente | Somente Filial 1 — Bairro Novo          |
-| `gerente3` | `loja1234`    | Gerente | Somente Filial 2 — São José dos Pinhais |
-| `gerente4` | `loja1234`    | Gerente | Somente Filial 3 — Pinheirinho          |
-| `gerente5` | `loja1234`    | Gerente | Somente Filial 4 — Colombo              |
+| Usuário    | Senha         | Nível   | Acesso                                    |
+|------------|---------------|---------|-------------------------------------------|
+| `admin`    | `umasenhaboa` | Admin   | Tudo + área administrativa                |
+| `gerente1` | `loja1234`    | Gerente | Somente Matriz — São Paulo                |
+| `gerente2` | `loja1234`    | Gerente | Somente Filial 1 — Rio de Janeiro         |
+| `gerente3` | `loja1234`    | Gerente | Somente Filial 2 — Belo Horizonte         |
+| `gerente4` | `loja1234`    | Gerente | Somente Filial 3 — Curitiba               |
+| `gerente5` | `loja1234`    | Gerente | Somente Filial 4 — Salvador               |
 
 **Comportamento por nível:**
 - **Admin** — vê dados de todas as lojas, acessa a área administrativa, edita metas
@@ -142,16 +144,17 @@ As senhas são armazenadas com hash **bcrypt** na tabela `usuarios` — nunca em
 - **Registrar Venda** — lançar venda ao vivo com desconto automático do estoque
 - **Transferência de Estoque** — mover produtos entre lojas
 - **Metas de Vendas** — definir metas mensais por loja; progresso visível no dashboard
-- **Exportar Excel** — gera `.xls` com 5 abas: Produtos, Vendas, Resumo por Loja, Previsão 6 Meses e Transferências
+- **Exportar Excel** — gera `.xls` com 7 abas: Dashboard, Clientes, Produtos, Vendas, Resumo por Loja, Previsão 6 Meses e Transferências
 - **Usuários** — trocar senha de qualquer usuário do sistema
 
 ---
 
 ## 📊 Dados do Sistema
 
-- **5 lojas:** Matriz Centro, Filial 1 Bairro Novo, Filial 2 São José dos Pinhais, Filial 3 Pinheirinho, Filial 4 Colombo
-- **50 produtos** cadastrados (10 por loja)
-- **150 vendas** registradas (Jan–Mar 2026)
+- **5 lojas:** Matriz São Paulo (SP), Filial 1 Rio de Janeiro (RJ), Filial 2 Belo Horizonte (MG), Filial 3 Curitiba (PR), Filial 4 Salvador (BA)
+- **500 produtos** cadastrados (100 por loja, 10 categorias cada)
+- **115 clientes** cadastrados distribuídos pelas 5 lojas
+- **80 vendas** registradas (Jan–Mar 2026)
 - **Previsão** calculada por média mensal × 6 meses
 
 ---
@@ -159,7 +162,7 @@ As senhas são armazenadas com hash **bcrypt** na tabela `usuarios` — nunca em
 ## 🧮 Metodologia de Previsão
 
 ```
-M�dia mensal = total vendido nos 3 meses ÷ 3
+Média mensal = total vendido nos 3 meses ÷ 3
 Demanda prevista = média mensal × 6 meses
 Reposição sugerida = demanda prevista − estoque atual
 ```
