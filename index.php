@@ -21,6 +21,25 @@ $kpi = $db->query("
 ")->fetch();
 
 $total_produtos = $db->query("SELECT COUNT(*) FROM produtos $w_produto")->fetchColumn();
+
+// --- Total de clientes ---
+$total_clientes = $db->query(
+    $loja_filtro
+        ? "SELECT COUNT(*) FROM clientes WHERE loja_id = $loja_filtro"
+        : "SELECT COUNT(*) FROM clientes"
+)->fetchColumn();
+
+// --- Receita por estado ---
+$por_estado = $db->query("
+    SELECT l.estado,
+           COALESCE(SUM(v.total), 0) AS receita,
+           COALESCE(COUNT(v.id), 0)  AS n_vendas
+    FROM lojas l
+    LEFT JOIN vendas v ON v.loja_id = l.id $w_v_join
+    $w_join
+    GROUP BY l.estado
+    ORDER BY receita DESC
+")->fetchAll();
 $alertas = $db->query("
     SELECT COUNT(*) FROM produtos WHERE estoque <= estoque_minimo
     " . ($loja_filtro ? "AND loja_id = $loja_filtro" : '')
@@ -116,6 +135,11 @@ include __DIR__ . '/includes/header.php';
         <div class="kpi-value"><?= $total_produtos ?></div>
         <div class="kpi-sub">em 5 lojas</div>
     </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Número de Clientes</div>
+        <div class="kpi-value"><?= number_format($total_clientes) ?></div>
+        <div class="kpi-sub">clientes cadastrados</div>
+    </div>
     <div class="kpi-card <?= $alertas > 0 ? 'danger' : 'ok' ?>">
         <div class="kpi-label">Alertas de Estoque</div>
         <div class="kpi-value"><?= $alertas ?></div>
@@ -155,6 +179,37 @@ include __DIR__ . '/includes/header.php';
                 <canvas id="chartCat"></canvas>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- RECEITA POR ESTADO -->
+<div class="panel" style="margin-bottom:24px">
+    <div class="panel-header">
+        <span class="panel-title">Receita por Estado</span>
+        <span class="panel-sub">todas as filiais</span>
+    </div>
+    <div class="panel-body">
+        <div class="chart-wrap" style="height:220px">
+            <canvas id="chartEstado"></canvas>
+        </div>
+        <table class="data-table" style="margin-top:16px">
+            <thead>
+                <tr>
+                    <th>Estado</th>
+                    <th class="num">Receita</th>
+                    <th class="num">Vendas</th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php foreach ($por_estado as $e): ?>
+            <tr>
+                <td style="font-weight:600;font-family:'Rajdhani',sans-serif;font-size:1rem"><?= htmlspecialchars($e['estado']) ?></td>
+                <td class="num mono" style="color:var(--accent)"><?= brl($e['receita']) ?></td>
+                <td class="num mono"><?= number_format($e['n_vendas']) ?></td>
+            </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
     </div>
 </div>
 
@@ -262,6 +317,26 @@ new Chart(document.getElementById('chartCat'), {
         }]
     },
     options: { ...chartDefaults }
+});
+
+// Receita por Estado
+new Chart(document.getElementById('chartEstado'), {
+    type: 'bar',
+    data: {
+        labels: <?= json_encode(array_column($por_estado, 'estado')) ?>,
+        datasets: [{
+            label: 'Receita por Estado (R$)',
+            data: <?= json_encode(array_column($por_estado, 'receita')) ?>,
+            backgroundColor: ['#3b82f650','#a78bfa50','#22c55e50','#f9731650','#fb923c50'],
+            borderColor:     ['#3b82f6',  '#a78bfa',  '#22c55e',  '#f97316',  '#fb923c'],
+            borderWidth: 2,
+            borderRadius: 5,
+        }]
+    },
+    options: { ...chartDefaults, scales: {
+        x: { ticks: { color:'#94a3b8' }, grid: { color:'#1f2231' } },
+        y: { ticks: { color:'#94a3b8', callback: v => 'R$' + (v/1000).toFixed(0) + 'k' }, grid: { color:'#1f2231' } }
+    }}
 });
 </script>
 

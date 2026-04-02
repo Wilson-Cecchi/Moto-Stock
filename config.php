@@ -93,5 +93,5 @@ function stockColor(int $estoque, int $minimo): string {
     return 'ok';
 }
 
-$CATEGORIAS = ['Proteção','Vestuário','Manutenção','Acessório','Segurança'];
+$CATEGORIAS = ['Acessório','Customização','Elétrica','Freios','Manutenção','Motor','Proteção','Segurança','Suspensão','Vestuário'];
 $MESES_PT = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
