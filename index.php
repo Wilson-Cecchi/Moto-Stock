@@ -5,10 +5,24 @@ $page  = 'dashboard';
 $title = 'Dashboard';
 $db    = getDB();
 $loja_filtro = getLojaFiltro(); // 0 = admin (todas), >0 = gerente (só a sua loja)
-$w_venda   = $loja_filtro ? "WHERE loja_id = $loja_filtro"     : '';
+
+// --- Filtro de período ---
+$anos_disp = [2024, 2025, 2026];
+$ano_sel   = isset($_GET['ano'])  && in_array((int)$_GET['ano'],  $anos_disp) ? (int)$_GET['ano']  : 2025;
+$mes_ini   = isset($_GET['mes_ini']) ? max(1, min(12, (int)$_GET['mes_ini'])) : 1;
+$mes_fim   = isset($_GET['mes_fim']) ? max(1, min(12, (int)$_GET['mes_fim'])) : 12;
+if ($mes_ini > $mes_fim) $mes_fim = $mes_ini;
+
+$w_periodo = "YEAR(data_venda) = $ano_sel AND MONTH(data_venda) BETWEEN $mes_ini AND $mes_fim";
+
+$w_venda   = $loja_filtro
+    ? "WHERE loja_id = $loja_filtro AND $w_periodo"
+    : "WHERE $w_periodo";
 $w_produto = $loja_filtro ? "WHERE loja_id = $loja_filtro"     : '';
 $w_join    = $loja_filtro ? "WHERE l.id    = $loja_filtro"     : '';
-$w_v_join  = $loja_filtro ? "AND v.loja_id = $loja_filtro"     : '';
+$w_v_join  = $loja_filtro
+    ? "AND v.loja_id = $loja_filtro AND $w_periodo"
+    : "AND $w_periodo";
 
 // --- KPIs gerais ---
 $kpi = $db->query("
@@ -60,7 +74,7 @@ $max_receita = max(array_column($por_loja, 'receita')) ?: 1;
 
 // --- Receita por mês ---
 $por_mes = $db->query("
-    SELECT MONTH(data_venda) AS mes, SUM(total) AS receita, COUNT(*) AS n
+    SELECT MONTH(data_venda) AS mes, SUM(total) AS receita, SUM(qtd) AS qtd, COUNT(*) AS n
     FROM vendas $w_venda GROUP BY mes ORDER BY mes
 ")->fetchAll();
 
@@ -70,11 +84,11 @@ $por_cat = $db->query("
     FROM vendas $w_venda GROUP BY categoria ORDER BY receita DESC
 ")->fetchAll();
 
-// --- Top 5 produtos mais vendidos ---
+// --- Top 10 produtos mais vendidos ---
 $top5 = $db->query("
     SELECT produto, categoria, SUM(qtd) AS qtd_total, SUM(total) AS receita
     FROM vendas $w_venda GROUP BY produto, categoria
-    ORDER BY qtd_total DESC LIMIT 5
+    ORDER BY qtd_total DESC LIMIT 10
 ")->fetchAll();
 
 // --- Metas do período --- motos
@@ -103,17 +117,62 @@ foreach ($metas_raw as $m) {
     $metas_por_loja[$lid]['realizado'] += $m['realizado'];
 }
 
-$MESES_PT = ['','Jan','Fev','Mar'];
+$MESES_PT = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
 include __DIR__ . '/includes/header.php';
 ?>
+
+<!-- FILTRO DE PERÍODO -->
+<form method="get" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:20px;
+    background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 18px;">
+    <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.9rem;color:var(--text2);margin-right:4px">⏱ Período:</span>
+
+    <select name="ano" onchange="this.form.submit()"
+        style="background:var(--surface3);border:1px solid var(--border2);color:var(--text);padding:6px 10px;border-radius:6px;font-size:.82rem;cursor:pointer">
+        <?php foreach($anos_disp as $a): ?>
+        <option value="<?= $a ?>" <?= $a == $ano_sel ? 'selected' : '' ?>><?= $a ?></option>
+        <?php endforeach; ?>
+    </select>
+
+    <label style="font-size:.8rem;color:var(--text3)">De</label>
+    <select name="mes_ini" onchange="this.form.submit()"
+        style="background:var(--surface3);border:1px solid var(--border2);color:var(--text);padding:6px 10px;border-radius:6px;font-size:.82rem;cursor:pointer">
+        <?php for($m=1;$m<=12;$m++): ?>
+        <option value="<?= $m ?>" <?= $m == $mes_ini ? 'selected' : '' ?>><?= $MESES_PT[$m] ?></option>
+        <?php endfor; ?>
+    </select>
+
+    <label style="font-size:.8rem;color:var(--text3)">até</label>
+    <select name="mes_fim" onchange="this.form.submit()"
+        style="background:var(--surface3);border:1px solid var(--border2);color:var(--text);padding:6px 10px;border-radius:6px;font-size:.82rem;cursor:pointer">
+        <?php for($m=1;$m<=12;$m++): ?>
+        <option value="<?= $m ?>" <?= $m == $mes_fim ? 'selected' : '' ?>><?= $MESES_PT[$m] ?></option>
+        <?php endfor; ?>
+    </select>
+
+    <?php if ($loja_filtro == 0): ?>
+    <select name="loja_dash" onchange="this.form.submit()"
+        style="background:var(--surface3);border:1px solid var(--border2);color:var(--text);padding:6px 10px;border-radius:6px;font-size:.82rem;cursor:pointer">
+        <option value="">Todas as lojas</option>
+        <?php
+        $lojas_all = $db->query("SELECT id, nome FROM lojas ORDER BY id")->fetchAll();
+        foreach($lojas_all as $la): ?>
+        <option value="<?= $la['id'] ?>"><?= htmlspecialchars($la['nome']) ?></option>
+        <?php endforeach; ?>
+    </select>
+    <?php endif; ?>
+
+    <span style="font-size:.75rem;color:var(--text3);margin-left:auto">
+        Exibindo: <?= $MESES_PT[$mes_ini] ?> – <?= $MESES_PT[$mes_fim] ?> <?= $ano_sel ?>
+    </span>
+</form>
 
 <!-- KPI CARDS -->
 <div class="kpi-grid">
     <div class="kpi-card accent">
         <div class="kpi-label">Receita Total</div>
         <div class="kpi-value"><?= brl($kpi['receita_total']) ?></div>
-        <div class="kpi-sub">Jan — Mar 2025</div>
+        <div class="kpi-sub"><?= $MESES_PT[$mes_ini] ?> — <?= $MESES_PT[$mes_fim] ?> <?= $ano_sel ?></div>
     </div>
     <div class="kpi-card">
         <div class="kpi-label">Vendas Realizadas</div>
@@ -160,7 +219,7 @@ include __DIR__ . '/includes/header.php';
     <div class="panel">
         <div class="panel-header">
             <span class="panel-title">Receita Mensal</span>
-            <span class="panel-sub">Jan–Mar 2026</span>
+            <span class="panel-sub"><?= $MESES_PT[$mes_ini] ?>–<?= $MESES_PT[$mes_fim] ?> <?= $ano_sel ?></span>
         </div>
         <div class="panel-body">
             <div class="chart-wrap">
@@ -178,6 +237,19 @@ include __DIR__ . '/includes/header.php';
             <div class="chart-wrap">
                 <canvas id="chartCat"></canvas>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- QTDE VENDIDA POR MÊS -->
+<div class="panel" style="margin-bottom:24px">
+    <div class="panel-header">
+        <span class="panel-title">Quantidade de Produtos Vendidos por Mês</span>
+        <span class="panel-sub"><?= $MESES_PT[$mes_ini] ?>–<?= $MESES_PT[$mes_fim] ?> <?= $ano_sel ?></span>
+    </div>
+    <div class="panel-body">
+        <div class="chart-wrap" style="height:200px">
+            <canvas id="chartQtdMes"></canvas>
         </div>
     </div>
 </div>
@@ -213,11 +285,24 @@ include __DIR__ . '/includes/header.php';
     </div>
 </div>
 
-<!-- LOJAS + TOP 5 -->
+<!-- RECEITA TOTAL POR PRODUTO -->
+<div class="panel" style="margin-bottom:24px">
+    <div class="panel-header">
+        <span class="panel-title">Receita Total por Produto</span>
+        <span class="panel-sub">top 10 por receita</span>
+    </div>
+    <div class="panel-body">
+        <div class="chart-wrap" style="height:280px">
+            <canvas id="chartProduto"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- LOJAS + TOP 10 -->
 <div class="section-grid thirds">
     <div class="panel">
         <div class="panel-header">
-            <span class="panel-title">Top 5 Produtos</span>
+            <span class="panel-title">Top 10 Produtos</span>
             <span class="panel-sub">por quantidade vendida</span>
         </div>
         <div class="panel-body" style="padding:0">
@@ -296,11 +381,48 @@ new Chart(document.getElementById('chartMes'), {
             borderColor: '#f97316',
             borderWidth: 2,
             borderRadius: 5,
+            yAxisID: 'y',
         }]
     },
     options: { ...chartDefaults, scales: {
         x: { ticks: { color:'#94a3b8' }, grid: { color:'#1f2231' } },
         y: { ticks: { color:'#94a3b8', callback: v => 'R$' + (v/1000).toFixed(0) + 'k' }, grid: { color:'#1f2231' } }
+    }}
+});
+
+// Quantidade de Produtos Vendidos por Mês
+new Chart(document.getElementById('chartQtdMes'), {
+    type: 'line',
+    data: {
+        labels: <?= json_encode(array_map(fn($r) => $MESES_PT[(int)$r['mes']], $por_mes)) ?>,
+        datasets: [
+            {
+                label: 'Qtd Itens Vendidos',
+                data: <?= json_encode(array_column($por_mes, 'qtd')) ?>,
+                backgroundColor: '#3b82f630',
+                borderColor: '#3b82f6',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#3b82f6',
+                pointRadius: 5,
+            },
+            {
+                label: 'Nº de Transações',
+                data: <?= json_encode(array_column($por_mes, 'n')) ?>,
+                backgroundColor: '#a78bfa30',
+                borderColor: '#a78bfa',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.4,
+                pointBackgroundColor: '#a78bfa',
+                pointRadius: 5,
+            }
+        ]
+    },
+    options: { ...chartDefaults, scales: {
+        x: { ticks: { color:'#94a3b8' }, grid: { color:'#1f2231' } },
+        y: { ticks: { color:'#94a3b8' }, grid: { color:'#1f2231' } }
     }}
 });
 
@@ -311,7 +433,7 @@ new Chart(document.getElementById('chartCat'), {
         labels: <?= json_encode(array_column($por_cat, 'categoria')) ?>,
         datasets: [{
             data: <?= json_encode(array_column($por_cat, 'receita')) ?>,
-            backgroundColor: ['#f97316','#fb923c','#3b82f6','#a78bfa','#22c55e'],
+            backgroundColor: ['#f97316','#fb923c','#3b82f6','#a78bfa','#22c55e','#eab308','#ef4444','#06b6d4','#ec4899','#84cc16'],
             borderColor: '#111318',
             borderWidth: 3,
         }]
@@ -338,13 +460,42 @@ new Chart(document.getElementById('chartEstado'), {
         y: { ticks: { color:'#94a3b8', callback: v => 'R$' + (v/1000).toFixed(0) + 'k' }, grid: { color:'#1f2231' } }
     }}
 });
+
+// Receita Total por Produto (top 10)
+new Chart(document.getElementById('chartProduto'), {
+    type: 'bar',
+    data: {
+        labels: <?= json_encode(array_column($top5, 'produto')) ?>,
+        datasets: [{
+            label: 'Receita (R$)',
+            data: <?= json_encode(array_column($top5, 'receita')) ?>,
+            backgroundColor: [
+                '#f9731660','#3b82f660','#a78bfa60','#22c55e60','#eab30860',
+                '#ef444460','#06b6d460','#ec489960','#84cc1660','#fb923c60'
+            ],
+            borderColor: [
+                '#f97316','#3b82f6','#a78bfa','#22c55e','#eab308',
+                '#ef4444','#06b6d4','#ec4899','#84cc16','#fb923c'
+            ],
+            borderWidth: 2,
+            borderRadius: 5,
+        }]
+    },
+    options: { ...chartDefaults,
+        indexAxis: 'y',
+        scales: {
+            x: { ticks: { color:'#94a3b8', callback: v => 'R$' + (v/1000).toFixed(0) + 'k' }, grid: { color:'#1f2231' } },
+            y: { ticks: { color:'#94a3b8', font: { size: 11 } }, grid: { color:'#1f2231' } }
+        }
+    }
+});
 </script>
 
 <?php if (!empty($metas_por_loja)): ?>
 <!-- METAS DE VENDAS -->
 <div class="panel" style="margin-bottom:24px">
     <div class="panel-header">
-        <span class="panel-title">Meta de Vendas — Jan–Mar 2026</span>
+        <span class="panel-title">Meta de Vendas — <?= $MESES_PT[$mes_ini] ?>–<?= $MESES_PT[$mes_fim] ?> <?= $ano_sel ?></span>
         <?php if (isAdmin()): ?>
         <a href="/motostock/admin/metas.php" class="no-print" style="font-size:.75rem;color:var(--accent);text-decoration:none">Editar metas →</a>
         <?php endif; ?>
