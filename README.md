@@ -33,7 +33,7 @@ Sistema web de apoio à decisão para previsão de demanda e gestão de estoque 
 motostock/
     |_ assets/
     |         |_ style.css
-    |         |_ admin_extra.css      ← estilos da área admin
+    |         |_ admin_extra.css      
     |_ includes/
     |           |_ header.php
     |           |_ footer.php
@@ -47,16 +47,16 @@ motostock/
     |        |_ venda.php
     |        |_ transferencia.php
     |        |_ exportar.php
-    |        |_ metas.php             ← gerenciar metas mensais por loja
-    |        |_ usuarios.php          ← gerenciar senhas dos usuários
+    |        |_ metas.php             
+    |        |_ usuarios.php          
     |_ config.php
-    |_ login.php          ← login unificado (admin e gerentes)
-    |_ logout.php         ← logout unificado
-    |_ index.php          ← Dashboard
-    |_ estoque.php        ← Estoque por loja
-    |_ previsao.php       ← Previsão 6 meses
-    |_ vendas.php         ← Histórico de vendas
-    |_ relatorio.php      ← Relatório imprimível / exportável como PDF
+    |_ login.php          
+    |_ logout.php         
+    |_ index.php         
+    |_ estoque.php        
+    |_ previsao.php       
+    |_ vendas.php         
+    |_ relatorio.php      
     |_ setup.sql          ← Banco de dados principal
     |_ setup_v2.sql       ← Tabelas de usuários e metas (rodar após setup.sql)
     |_ setup_v3.sql       ← Tabela de solicitações e nível funcionário (rodar após setup_v2.sql)
