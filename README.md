@@ -6,7 +6,7 @@ Sistema web de apoio à decisão para previsão de demanda e gestão de estoque 
 
 ---
 
-## 👥 Equipe
+## Equipe
 
 - Bruna Vitoria de Oliveira Santos
 - Fernando Rafael Ramos
@@ -14,7 +14,7 @@ Sistema web de apoio à decisão para previsão de demanda e gestão de estoque 
 
 ---
 
-## 📋 Requisitos do Trabalho
+## Requisitos do Trabalho
 
 | Requisito | Status |
 |-----------|--------|
@@ -27,7 +27,7 @@ Sistema web de apoio à decisão para previsão de demanda e gestão de estoque 
 
 ---
 
-## 🗂️ Estrutura de Arquivos
+## Estrutura de Arquivos
 
 ```
 motostock/
@@ -37,7 +37,7 @@ motostock/
     |_ includes/
     |           |_ header.php
     |           |_ footer.php
-    |           |_ admin_sidebar.php  ← sidebar reutilizável do admin
+    |           |_ admin_sidebar.php 
     |_ admin/
     |        |_ auth.php
     |        |_ login.php             ← redireciona para /motostock/login.php
@@ -65,7 +65,7 @@ motostock/
 
 ---
 
-## ⚙️ Instalação
+## Instalação
 
 ### Pré-requisitos
 - [XAMPP](https://www.apachefriends.org/) instalado e rodando (Apache + MySQL)
@@ -106,7 +106,7 @@ http://localhost/motostock/login.php
 
 ---
 
-## 🖥️ Páginas do Sistema
+## Páginas do Sistema
 
 | Página | URL | Descrição |
 |--------|-----|-----------|
@@ -120,7 +120,7 @@ http://localhost/motostock/login.php
 
 ---
 
-## 🔐 Login e Permissões
+## Login e Permissões
 
 O sistema possui dois níveis de acesso. Todos os usuários entram pela mesma página de login.
 
@@ -149,7 +149,7 @@ As senhas são armazenadas com hash **bcrypt** na tabela `usuarios` — nunca em
 
 ---
 
-## 📊 Dados do Sistema
+## Dados do Sistema
 
 - **5 lojas:** Matriz São Paulo (SP), Filial 1 Rio de Janeiro (RJ), Filial 2 Belo Horizonte (MG), Filial 3 Curitiba (PR), Filial 4 Salvador (BA)
 - **500 produtos** cadastrados (100 por loja, 10 categorias cada)
@@ -159,7 +159,7 @@ As senhas são armazenadas com hash **bcrypt** na tabela `usuarios` — nunca em
 
 ---
 
-## 🧮 Metodologia de Previsão
+## Metodologia de Previsão
 
 ```
 Média mensal = total vendido nos 3 meses ÷ 3
