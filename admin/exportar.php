@@ -347,7 +347,7 @@ echo xlsHeaderRow(array_merge(
 ));
 foreach ($previsao as $p) {
     $total6m = round($p['media_mensal'] * 6);
-    $row = [$p['loja_nome'], $p['produto'], $p['categoria'], (float)$p['media_mensal']];
+    $row = [$p['loja_nome'], $p['produto'], $p['categoria'], (int)round($p['media_mensal'])];
     for ($m = 1; $m <= 6; $m++) {
         $row[] = (int)round($p['media_mensal'] * $m);
     }
