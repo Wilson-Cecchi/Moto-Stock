@@ -25,6 +25,9 @@ function xlsBegin(): string {
         <Style ss:ID="currency">
             <NumberFormat ss:Format="R$\ #,##0.00"/>
         </Style>
+        <Style ss:ID="number">
+            <NumberFormat ss:Format="0.00"/>
+        </Style>
         <Style ss:ID="date">
             <NumberFormat ss:Format="DD/MM/YYYY"/>
         </Style>
@@ -58,6 +61,11 @@ function xlsRow(array $cells, string $style = ''): string {
     }
     $out .= "</Row>\n";
     return $out;
+}
+
+/** Célula numérica com decimal mas sem formatação de moeda (ex: médias de quantidade) */
+function xlsNumCell(float $v): string {
+    return '<Cell ss:StyleID="number"><Data ss:Type="Number">' . $v . '</Data></Cell>';
 }
 
 function xlsHeaderRow(array $cells, string $style = 'header'): string {
@@ -347,13 +355,21 @@ echo xlsHeaderRow(array_merge(
 ));
 foreach ($previsao as $p) {
     $total6m = round($p['media_mensal'] * 6);
-    $row = [$p['loja_nome'], $p['produto'], $p['categoria'], (int)round($p['media_mensal'])];
-    for ($m = 1; $m <= 6; $m++) {
-        $row[] = (int)round($p['media_mensal'] * $m);
+    $row = [$p['loja_nome'], $p['produto'], $p['categoria']];
+    // Monta a row manualmente para usar xlsNumCell na média
+    $out = '<Row>';
+    foreach ($row as $c) {
+        $escaped = htmlspecialchars((string)$c, ENT_XML1, 'UTF-8');
+        $out .= '<Cell><Data ss:Type="String">' . $escaped . '</Data></Cell>';
     }
-    $row[] = $total6m;
-    $row[] = round($total6m * $p['preco_unit'], 2);
-    echo xlsRow($row);
+    $out .= xlsNumCell((float)$p['media_mensal']);
+    for ($m = 1; $m <= 6; $m++) {
+        $out .= '<Cell><Data ss:Type="Number">' . (int)round($p['media_mensal'] * $m) . '</Data></Cell>';
+    }
+    $out .= '<Cell><Data ss:Type="Number">' . (int)$total6m . '</Data></Cell>';
+    $out .= '<Cell ss:StyleID="currency"><Data ss:Type="Number">' . round($total6m * $p['preco_unit'], 2) . '</Data></Cell>';
+    $out .= "</Row>\n";
+    echo $out;
 }
 echo xlsSheetEnd();
 
