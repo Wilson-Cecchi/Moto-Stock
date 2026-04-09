@@ -57,6 +57,18 @@ $_user = getCurrentUser();
             body  { background:#fff !important; color:#000 !important; }
         }
     </style>
+    <script>
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('open');
+            document.getElementById('sidebarOverlay').classList.toggle('active');
+            document.getElementById('hamburgerBtn').classList.toggle('open');
+        }
+        function closeSidebar() {
+            document.querySelector('.sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('active');
+            document.getElementById('hamburgerBtn').classList.remove('open');
+        }
+    </script>
 </head>
 <body>
 
@@ -114,8 +126,13 @@ $_user = getCurrentUser();
     </div>
 </aside>
 
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
 <main class="main">
     <header class="topbar">
+        <button class="hamburger no-print" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
         <div class="topbar-title">
             <h1><?= htmlspecialchars($title ?? 'Dashboard') ?></h1>
         </div>

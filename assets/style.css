@@ -435,6 +435,45 @@ html, body { overflow-x: hidden; }
 /* KPI grid: adapta colunas */
 .kpi-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
 
+/* ── Overlay mobile ── */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.55);
+    z-index: 199;
+    backdrop-filter: blur(2px);
+}
+.sidebar-overlay.active { display: block; }
+
+/* ── Hamburger button ── */
+.hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 36px;
+    height: 36px;
+    padding: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-right: 12px;
+}
+.hamburger span {
+    display: block;
+    height: 2px;
+    background: var(--text);
+    border-radius: 2px;
+    transition: transform .25s ease, opacity .2s ease;
+    transform-origin: center;
+}
+.hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; }
+.hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
 @media (max-width: 1200px) {
     :root { --sidebar-w: 200px; }
 }
@@ -455,8 +494,23 @@ html, body { overflow-x: hidden; }
 }
 
 @media (max-width: 768px) {
-    .sidebar { display: none; }
+    .hamburger { display: flex; }
+
+    .sidebar {
+        position: fixed;
+        left: 0; top: 0; bottom: 0;
+        width: 260px;
+        transform: translateX(-100%);
+        transition: transform .28s cubic-bezier(.4,0,.2,1);
+        z-index: 200;
+        box-shadow: 4px 0 24px rgba(0,0,0,.4);
+    }
+    .sidebar.open { transform: translateX(0); }
+
     .main { margin-left: 0; }
+    .topbar { display: flex; align-items: center; }
+    .topbar-title h1 { font-size: 1.05rem; }
+
     .kpi-grid { grid-template-columns: 1fr 1fr; }
     .prev-grid { grid-template-columns: repeat(2, 1fr); }
 }
@@ -465,4 +519,5 @@ html, body { overflow-x: hidden; }
     .kpi-grid { grid-template-columns: 1fr; }
     .prev-grid { grid-template-columns: 1fr 1fr; }
     .filters select, .filters input { width: 100%; }
+    .topbar-meta { display: none; }
 }
