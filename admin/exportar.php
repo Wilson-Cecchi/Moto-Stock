@@ -100,6 +100,12 @@ function xlsBlankRow(): string { return "<Row><Cell><Data ss:Type=\"String\"></D
 // ---- Busca dados ----
 $lojas = $db->query("SELECT * FROM lojas ORDER BY id")->fetchAll();
 
+// Estoque atual por loja+produto (para aba Previsão)
+$estoque_map = [];
+foreach ($db->query("SELECT loja_id, nome, estoque, estoque_minimo FROM produtos")->fetchAll() as $e) {
+    $estoque_map[$e['loja_id']][$e['nome']] = (int)$e['estoque'];
+}
+
 $produtos = $db->query("
     SELECT p.*, l.nome AS loja_nome, l.estado
     FROM produtos p JOIN lojas l ON l.id = p.loja_id
@@ -206,7 +212,80 @@ header('Cache-Control: max-age=0');
 echo xlsBegin();
 
 // ====================================================
-// ABA 1: DASHBOARD (todos os KPIs do trabalho)
+// ABA 1: LOJAS (Matriz + Filiais)
+// ====================================================
+echo xlsSheetStart('Lojas');
+echo '<Row><Cell ss:StyleID="header_orange"><Data ss:Type="String">MotoStock — Lojas Cadastradas</Data></Cell></Row>' . "\n";
+echo xlsBlankRow();
+echo xlsHeaderRow(['#', 'Nome', 'Tipo', 'Cidade', 'Estado', 'Endereço']);
+foreach ($lojas as $i => $l) {
+    echo xlsRow([
+        $i + 1,
+        $l['nome'],
+        $l['tipo'],
+        $l['cidade'],
+        $l['estado'],
+        $l['endereco'] ?? '',
+    ]);
+}
+echo xlsSheetEnd();
+
+// ====================================================
+// ABA 2: PRODUTOS
+// ====================================================
+echo xlsSheetStart('Produtos');
+echo xlsHeaderRow(['#', 'Produto', 'Categoria', 'Loja', 'Estado', 'Preço Unit. (R$)', 'Estoque', 'Est. Mínimo', 'Valor em Estoque']);
+$i = 1;
+foreach ($produtos as $p) {
+    echo xlsRow([
+        $i++,
+        $p['nome'],
+        $p['categoria'],
+        $p['loja_nome'],
+        $p['estado'],
+        (float)$p['preco'],
+        (int)$p['estoque'],
+        (int)$p['estoque_minimo'],
+        round($p['preco'] * $p['estoque'], 2),
+    ]);
+}
+echo xlsSheetEnd();
+
+// ====================================================
+// ABA 3: PREVISÃO 6 MESES
+// ====================================================
+echo xlsSheetStart('Previsão 6 Meses');
+$MESES = ['Abr/25','Mai/25','Jun/25','Jul/25','Ago/25','Set/25'];
+echo xlsHeaderRow(array_merge(
+    ['Loja', 'Produto', 'Categoria', 'Méd/Mês', 'Estoque Atual'],
+    $MESES,
+    ['Total 6m', 'Repor', 'Receita Prevista (R$)']
+));
+foreach ($previsao as $p) {
+    $total6m    = (int)round($p['media_mensal'] * 6);
+    $est_atual  = $estoque_map[$p['loja_id']][$p['produto']] ?? 0;
+    $repor      = max(0, $total6m - $est_atual);
+
+    $out = '<Row>';
+    foreach ([$p['loja_nome'], $p['produto'], $p['categoria']] as $c) {
+        $escaped = htmlspecialchars((string)$c, ENT_XML1, 'UTF-8');
+        $out .= '<Cell><Data ss:Type="String">' . $escaped . '</Data></Cell>';
+    }
+    $out .= xlsNumCell((float)$p['media_mensal']);
+    $out .= '<Cell><Data ss:Type="Number">' . $est_atual . '</Data></Cell>';
+    for ($m = 1; $m <= 6; $m++) {
+        $out .= '<Cell><Data ss:Type="Number">' . (int)round($p['media_mensal'] * $m) . '</Data></Cell>';
+    }
+    $out .= '<Cell><Data ss:Type="Number">' . $total6m . '</Data></Cell>';
+    $out .= '<Cell><Data ss:Type="Number">' . $repor . '</Data></Cell>';
+    $out .= '<Cell ss:StyleID="currency"><Data ss:Type="Number">' . round($total6m * $p['preco_unit'], 2) . '</Data></Cell>';
+    $out .= "</Row>\n";
+    echo $out;
+}
+echo xlsSheetEnd();
+
+// ====================================================
+// ABA 4: DASHBOARD (todos os KPIs do trabalho)
 // ====================================================
 echo xlsSheetStart('Dashboard');
 
@@ -271,45 +350,21 @@ foreach ($clientes_por_loja as $cl) {
 echo xlsSheetEnd();
 
 // ====================================================
-// ABA 2: CLIENTES
+// ABA 5: RESUMO POR LOJA
 // ====================================================
-$todos_clientes = $db->query("
-    SELECT c.id, c.nome, c.email, l.nome AS loja_nome, l.estado
-    FROM clientes c JOIN lojas l ON l.id = c.loja_id
-    ORDER BY l.id, c.nome
-")->fetchAll();
-
-echo xlsSheetStart('Clientes');
-echo xlsHeaderRow(['#', 'Nome', 'E-mail', 'Loja', 'Estado']);
-$i = 1;
-foreach ($todos_clientes as $c) {
-    echo xlsRow([$i++, $c['nome'], $c['email'], $c['loja_nome'], $c['estado']]);
-}
-echo xlsSheetEnd();
-
-// ====================================================
-// ABA 3: PRODUTOS
-// ====================================================
-echo xlsSheetStart('Produtos');
-echo xlsHeaderRow(['#', 'Produto', 'Categoria', 'Loja', 'Estado', 'Preço Unit. (R$)', 'Estoque', 'Est. Mínimo', 'Valor em Estoque']);
-$i = 1;
-foreach ($produtos as $p) {
+echo xlsSheetStart('Resumo por Loja');
+echo xlsHeaderRow(['Loja', 'Tipo', 'Nº Vendas', 'Qtd Total', 'Receita (R$)', 'Ticket Médio (R$)']);
+foreach ($resumo_loja as $r) {
     echo xlsRow([
-        $i++,
-        $p['nome'],
-        $p['categoria'],
-        $p['loja_nome'],
-        $p['estado'],
-        (float)$p['preco'],
-        (int)$p['estoque'],
-        (int)$p['estoque_minimo'],
-        round($p['preco'] * $p['estoque'], 2),
+        $r['nome'], $r['tipo'],
+        (int)$r['n_vendas'], (int)$r['qtd_total'],
+        (float)$r['receita'], (float)$r['ticket_medio'],
     ]);
 }
 echo xlsSheetEnd();
 
 // ====================================================
-// ABA 4: VENDAS
+// ABA 6: VENDAS
 // ====================================================
 echo xlsSheetStart('Vendas');
 echo xlsHeaderRow(['ID', 'Data', 'Loja', 'Estado', 'Cliente', 'Produto', 'Categoria', 'Qtd', 'Preço Unit. (R$)', 'Total (R$)']);
@@ -330,51 +385,24 @@ foreach ($vendas as $v) {
 echo xlsSheetEnd();
 
 // ====================================================
-// ABA 5: RESUMO POR LOJA
+// ABA 7: CLIENTES
 // ====================================================
-echo xlsSheetStart('Resumo por Loja');
-echo xlsHeaderRow(['Loja', 'Tipo', 'Nº Vendas', 'Qtd Total', 'Receita (R$)', 'Ticket Médio (R$)']);
-foreach ($resumo_loja as $r) {
-    echo xlsRow([
-        $r['nome'], $r['tipo'],
-        (int)$r['n_vendas'], (int)$r['qtd_total'],
-        (float)$r['receita'], (float)$r['ticket_medio'],
-    ]);
+$todos_clientes = $db->query("
+    SELECT c.id, c.nome, c.email, l.nome AS loja_nome, l.estado
+    FROM clientes c JOIN lojas l ON l.id = c.loja_id
+    ORDER BY l.id, c.nome
+")->fetchAll();
+
+echo xlsSheetStart('Clientes');
+echo xlsHeaderRow(['#', 'Nome', 'E-mail', 'Loja', 'Estado']);
+$i = 1;
+foreach ($todos_clientes as $c) {
+    echo xlsRow([$i++, $c['nome'], $c['email'], $c['loja_nome'], $c['estado']]);
 }
 echo xlsSheetEnd();
 
 // ====================================================
-// ABA 6: PREVISÃO 6 MESES
-// ====================================================
-echo xlsSheetStart('Previsão 6 Meses');
-$MESES = ['Abr/25','Mai/25','Jun/25','Jul/25','Ago/25','Set/25'];
-echo xlsHeaderRow(array_merge(
-    ['Loja', 'Produto', 'Categoria', 'Méd/Mês'],
-    $MESES,
-    ['Total 6m', 'Receita Prevista (R$)']
-));
-foreach ($previsao as $p) {
-    $total6m = round($p['media_mensal'] * 6);
-    $row = [$p['loja_nome'], $p['produto'], $p['categoria']];
-    // Monta a row manualmente para usar xlsNumCell na média
-    $out = '<Row>';
-    foreach ($row as $c) {
-        $escaped = htmlspecialchars((string)$c, ENT_XML1, 'UTF-8');
-        $out .= '<Cell><Data ss:Type="String">' . $escaped . '</Data></Cell>';
-    }
-    $out .= xlsNumCell((float)$p['media_mensal']);
-    for ($m = 1; $m <= 6; $m++) {
-        $out .= '<Cell><Data ss:Type="Number">' . (int)round($p['media_mensal'] * $m) . '</Data></Cell>';
-    }
-    $out .= '<Cell><Data ss:Type="Number">' . (int)$total6m . '</Data></Cell>';
-    $out .= '<Cell ss:StyleID="currency"><Data ss:Type="Number">' . round($total6m * $p['preco_unit'], 2) . '</Data></Cell>';
-    $out .= "</Row>\n";
-    echo $out;
-}
-echo xlsSheetEnd();
-
-// ====================================================
-// ABA 7: TRANSFERÊNCIAS
+// ABA 8: TRANSFERÊNCIAS
 // ====================================================
 $transferencias = $db->query("
     SELECT t.*, lo.nome AS origem_nome, ld.nome AS destino_nome
