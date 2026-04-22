@@ -193,9 +193,10 @@ $resumo_loja = $db->query("
     GROUP BY l.id ORDER BY receita DESC
 ")->fetchAll();
 
-// Previsão 6 meses
+// Previsão 6 meses 
 $previsao = $db->query("
     SELECT v.loja_id, l.nome AS loja_nome, v.produto, v.categoria,
+        SUM(v.qtd)                AS total_vendido,
         ROUND(SUM(v.qtd)/3.0, 2) AS media_mensal,
         MAX(v.preco_unit)         AS preco_unit
     FROM vendas v JOIN lojas l ON l.id = v.loja_id
@@ -256,27 +257,45 @@ echo xlsSheetEnd();
 // ====================================================
 echo xlsSheetStart('Previsão 6 Meses');
 $MESES = ['Abr/25','Mai/25','Jun/25','Jul/25','Ago/25','Set/25'];
+
 echo xlsHeaderRow(array_merge(
-    ['Loja', 'Produto', 'Categoria', 'Méd/Mês', 'Estoque Atual'],
+    ['Loja', 'Produto', 'Categoria', 'Hist. 3 meses', 'Méd/Mês'],
     $MESES,
-    ['Total 6m', 'Repor', 'Receita Prevista (R$)']
+    ['Total 6m', 'Estoque Atual', 'Repor', 'Receita Prevista (R$)']
 ));
+
 foreach ($previsao as $p) {
-    $total6m    = (int)round($p['media_mensal'] * 6);
+    $media      = (float)$p['media_mensal'];
+    $total_hist = (int)$p['total_vendido'];
+    $total6m    = (int)round($media * 6);
     $est_atual  = $estoque_map[$p['loja_id']][$p['produto']] ?? 0;
     $repor      = max(0, $total6m - $est_atual);
 
     $out = '<Row>';
+
+    // Colunas de texto
     foreach ([$p['loja_nome'], $p['produto'], $p['categoria']] as $c) {
         $escaped = htmlspecialchars((string)$c, ENT_XML1, 'UTF-8');
         $out .= '<Cell><Data ss:Type="String">' . $escaped . '</Data></Cell>';
     }
-    $out .= xlsNumCell((float)$p['media_mensal']);
-    $out .= '<Cell><Data ss:Type="Number">' . $est_atual . '</Data></Cell>';
+
+    // Histórico Jan–Mar 
+    $out .= '<Cell><Data ss:Type="Number">' . $total_hist . '</Data></Cell>';
+
+    // Média mensal (com 2 casas decimais)
+    $out .= xlsNumCell($media);
+
+    // Colunas mensais — demanda INDIVIDUAL de cada mês (incremental)
     for ($m = 1; $m <= 6; $m++) {
-        $out .= '<Cell><Data ss:Type="Number">' . (int)round($p['media_mensal'] * $m) . '</Data></Cell>';
+        $acum_atual  = (int)round($media * $m);
+        $acum_antes  = (int)round($media * ($m - 1));
+        $demanda_mes = $acum_atual - $acum_antes;
+        $out .= '<Cell><Data ss:Type="Number">' . $demanda_mes . '</Data></Cell>';
     }
+
+    // Total 6m, Estoque Atual, Repor, Receita Prevista
     $out .= '<Cell><Data ss:Type="Number">' . $total6m . '</Data></Cell>';
+    $out .= '<Cell><Data ss:Type="Number">' . $est_atual . '</Data></Cell>';
     $out .= '<Cell><Data ss:Type="Number">' . $repor . '</Data></Cell>';
     $out .= '<Cell ss:StyleID="currency"><Data ss:Type="Number">' . round($total6m * $p['preco_unit'], 2) . '</Data></Cell>';
     $out .= "</Row>\n";
