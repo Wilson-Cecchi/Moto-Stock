@@ -8,9 +8,9 @@ Sistema web de apoio à decisão para previsão de demanda e gestão de estoque 
 
 ## 👥 Equipe
 
-- Bruna Vitoria de Oliveira Santos
-- Fernando Rafael Ramos
-- Wilson Klein Cecchi
+- Bruna Vitoria
+- Fernando Ramos
+- Wilson Cecchi
 
 ---
 
@@ -39,38 +39,42 @@ Sistema web de apoio à decisão para previsão de demanda e gestão de estoque 
 
 ```
 motostock/
-├── assets/
-│   ├── style.css             ← estilos globais + responsividade mobile
-│   └── admin_extra.css       ← estilos exclusivos da área admin
-├── includes/
-│   ├── header.php            ← HTML, sidebar, topbar e hamburger (páginas públicas)
-│   ├── footer.php
-│   └── admin_sidebar.php     ← sidebar reutilizável do admin (com hamburger mobile)
 ├── admin/
-│   ├── auth.php
-│   ├── index.php             ← Painel administrativo
-│   ├── produtos.php          ← CRUD de produtos
-│   ├── venda.php             ← Registrar venda ao vivo
-│   ├── transferencia.php     ← Transferência de estoque entre lojas
+│   ├── auth.php              ← Verificação de autenticação e permissões
 │   ├── exportar.php          ← Geração do Excel (.xls com 8 abas)
+│   ├── index.php             ← Painel administrativo
+│   ├── login.php             ← Login da área admin
+│   ├── logout.php            ← Logout da área admin
 │   ├── metas.php             ← Metas mensais por loja
+│   ├── produtos.php          ← CRUD de produtos
 │   ├── solicitacoes.php      ← Aprovar/rejeitar solicitações (admin)
-│   └── usuarios.php          ← Gerenciar senhas dos usuários
+│   ├── transferencia.php     ← Transferência de estoque entre lojas
+│   ├── usuarios.php          ← Gerenciar senhas dos usuários
+│   └── venda.php             ← Registrar venda ao vivo
+├── assets/
+│   ├── excel/                ← Arquivos auxiliares para exportação Excel
+│   ├── admin_extra.css       ← Estilos exclusivos da área admin
+│   └── style.css             ← Estilos globais + responsividade mobile
 ├── gerente/
 │   └── solicitacoes.php      ← Aprovar solicitações (gerente da loja cedente)
+├── includes/
+│   ├── admin_sidebar.php     ← Sidebar reutilizável do admin (com hamburger mobile)
+│   ├── footer.php
+│   └── header.php            ← HTML, sidebar, topbar e hamburger (páginas públicas)
+├── SQL/
+│   ├── schema.sql            ← Estrutura do banco (tabelas, relações)
+│   └── data.sql              ← Dados iniciais (lojas, produtos, clientes, vendas)
 ├── config.php                ← Conexão com BD e helpers globais
+├── estoque.php               ← Estoque por loja com alertas
+├── funcionario.php           ← Tela do funcionário (solicitações de reposição)
+├── index.php                 ← Dashboard (KPIs, gráficos, metas)
 ├── login.php                 ← Login unificado (todos os níveis)
 ├── logout.php
-├── index.php                 ← Dashboard (KPIs, gráficos, metas)
-├── estoque.php               ← Estoque por loja com alertas
 ├── previsao.php              ← Previsão de demanda — próximos 6 meses
-├── vendas.php                ← Histórico de vendas com filtros e paginação
+├── README.md
 ├── relatorio.php             ← Relatório imprimível / PDF
-├── funcionario.php           ← Tela do funcionário (solicitações de reposição)
-├── setup.sql                 ← Banco de dados principal
-├── setup_v2.sql              ← Tabelas: usuarios, metas, transferencias
-├── setup_v3.sql              ← Tabela: solicitacoes + nível funcionario
-└── setup_usuarios.php        ← Cria usuários no banco (rodar 1x e deletar)
+├── setup_usuarios.php        ← Cria usuários no banco (rodar 1x e deletar)
+└── vendas.php                ← Histórico de vendas com filtros e paginação
 ```
 
 ---
@@ -92,11 +96,10 @@ motostock/
 
 **2. Importar o banco de dados**
 
-Abre `http://localhost/phpmyadmin`, clica em **Importar** e executa os arquivos na ordem:
+Abre `http://localhost/phpmyadmin`, clica em **Importar** e executa os arquivos da pasta `SQL/` na ordem:
 
-1. `setup.sql` — cria o banco com lojas, produtos, clientes e vendas
-2. `setup_v2.sql` — cria as tabelas `usuarios`, `metas` e `transferencias`
-3. `setup_v3.sql` — cria a tabela `solicitacoes` e adiciona o nível `funcionario`
+1. `schema.sql` — cria o banco com todas as tabelas e relações
+2. `data.sql` — popula o banco com lojas, produtos, clientes e vendas
 
 **3. Criar os usuários**
 
