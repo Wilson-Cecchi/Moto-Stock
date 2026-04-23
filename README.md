@@ -16,22 +16,22 @@ Sistema web de apoio à decisão para previsão de demanda e gestão de estoque 
 
 ## 📋 Requisitos do Trabalho
 
-| Requisito | Status |
-|-----------|--------|
-| 1 matriz + 4 filiais em 5 estados diferentes | ✅ |
-| Mínimo 100 produtos por loja | ✅ 100 por loja (500 total) |
-| Mínimo 10 tipos de produtos por loja | ✅ 10 categorias |
-| Planejamento de 6 meses | ✅ Abr–Set 2025 |
-| Planilha Excel | ✅ Exportação dinâmica com 8 abas |
-| Dashboard com dados financeiros | ✅ |
-| Número de clientes | ✅ |
-| Quantidade de produtos vendidos no mês | ✅ |
-| Quantidade de vendas | ✅ |
-| Receita por estado | ✅ |
-| Receita total | ✅ |
-| Receita total por filial | ✅ |
-| Receita total por produto | ✅ |
-| Simulação ao vivo | ✅ Admin permite registrar vendas em tempo real |
+| Requisito                                    | Status                                          |
+|----------------------------------------------|-------------------------------------------------|
+| 1 matriz + 4 filiais em 5 estados diferentes | ✅                                              |
+| Mínimo 100 produtos por loja                 | ✅ 100 por loja (500 total)                     |
+| Mínimo 10 tipos de produtos por loja         | ✅ 10 categorias                                |
+| Planejamento de 6 meses                      | ✅ Abr–Set 2025                                 |
+| Planilha Excel                               | ✅ Exportação dinâmica com 8 abas               |
+| Dashboard com dados financeiros              | ✅                                              |
+| Número de clientes                           | ✅                                              |
+| Quantidade de produtos vendidos no mês       | ✅                                              |
+| Quantidade de vendas                         | ✅                                              |
+| Receita por estado                           | ✅                                              |
+| Receita total                                | ✅                                              |
+| Receita total por filial                     | ✅                                              |
+| Receita total por produto                    | ✅                                              |
+| Simulação ao vivo                            | ✅ Admin permite registrar vendas em tempo real |
 
 ---
 
@@ -62,8 +62,8 @@ motostock/
 │   ├── footer.php
 │   └── header.php            ← HTML, sidebar, topbar e hamburger (páginas públicas)
 ├── SQL/
-│   ├── schema.sql            ← Estrutura do banco (tabelas, relações)
-│   └── data.sql              ← Dados iniciais (lojas, produtos, clientes, vendas)
+│   ├── schema.sql            ← Estrutura do banco + usuário admin
+│   └── data.sql              ← Dados iniciais (lojas, produtos, clientes, vendas, gerentes)
 ├── config.php                ← Conexão com BD e helpers globais
 ├── estoque.php               ← Estoque por loja com alertas
 ├── funcionario.php           ← Tela do funcionário (solicitações de reposição)
@@ -73,7 +73,6 @@ motostock/
 ├── previsao.php              ← Previsão de demanda — próximos 6 meses
 ├── README.md
 ├── relatorio.php             ← Relatório imprimível / PDF
-├── setup_usuarios.php        ← Cria usuários no banco (rodar 1x e deletar)
 └── vendas.php                ← Histórico de vendas com filtros e paginação
 ```
 
@@ -88,32 +87,26 @@ motostock/
 
 **1. Copiar a pasta para o XAMPP**
 
-| Sistema | Caminho |
-|---------|---------|
-| Windows | `C:\xampp\htdocs\motostock\` |
-| macOS | `/Applications/XAMPP/htdocs/motostock/` |
-| Linux | `/opt/lampp/htdocs/motostock/` |
+| Sistema | Caminho                                 |
+|---------|-----------------------------------------|
+| Windows | `C:\xampp\htdocs\motostock\`            |
+| macOS   | `/Applications/XAMPP/htdocs/motostock/` |
+| Linux   | `/opt/lampp/htdocs/motostock/`          |
 
 **2. Importar o banco de dados**
 
 Abre `http://localhost/phpmyadmin`, clica em **Importar** e executa os arquivos da pasta `SQL/` na ordem:
 
-1. `schema.sql` — cria o banco com todas as tabelas e relações
-2. `data.sql` — popula o banco com lojas, produtos, clientes e vendas
+1. `schema.sql` — cria o banco com todas as tabelas, relações e usuário admin
+2. `data.sql` — popula o banco com lojas, produtos, clientes, vendas e gerentes
 
-**3. Criar os usuários**
-
-Acessa `http://localhost/motostock/setup_usuarios.php` uma única vez.
-
-> ⚠️ **Delete o arquivo após rodar** — ele não deve ficar acessível.
-
-**4. (Linux apenas) Corrigir permissões**
+**3. (Linux apenas) Corrigir permissões**
 
 ```bash
 chmod -R 755 /opt/lampp/htdocs/motostock
 ```
 
-**5. Acessar o sistema**
+**4. Acessar o sistema**
 
 ```
 http://localhost/motostock/login.php
@@ -123,17 +116,17 @@ http://localhost/motostock/login.php
 
 ## 🖥️ Páginas do Sistema
 
-| Página | URL | Acesso |
-|--------|-----|--------|
-| Login | `/motostock/login.php` | Todos |
-| Dashboard | `/motostock/` | Admin, Gerente |
-| Estoque | `/motostock/estoque.php` | Admin, Gerente |
-| Previsão 6 meses | `/motostock/previsao.php` | Admin, Gerente |
-| Vendas | `/motostock/vendas.php` | Admin, Gerente |
-| Relatório PDF | `/motostock/relatorio.php` | Admin, Gerente |
-| Solicitações (gerente) | `/motostock/gerente/solicitacoes.php` | Gerente |
-| Painel do Funcionário | `/motostock/funcionario.php` | Funcionário |
-| Área Admin | `/motostock/admin/` | Admin |
+| Página                 | URL                                   | Acesso         |
+|------------------------|---------------------------------------|----------------|
+| Login                  | `/motostock/login.php`                | Todos          |
+| Dashboard              | `/motostock/`                         | Admin, Gerente |
+| Estoque                | `/motostock/estoque.php`              | Admin, Gerente |
+| Previsão 6 meses       | `/motostock/previsao.php`             | Admin, Gerente |
+| Vendas                 | `/motostock/vendas.php`               | Admin, Gerente |
+| Relatório PDF          | `/motostock/relatorio.php`            | Admin, Gerente |
+| Solicitações (gerente) | `/motostock/gerente/solicitacoes.php` | Gerente        |
+| Painel do Funcionário  | `/motostock/funcionario.php`          | Funcionário    |
+| Área Admin             | `/motostock/admin/`                   | Admin          |
 
 ---
 
@@ -141,20 +134,19 @@ http://localhost/motostock/login.php
 
 O sistema possui três níveis de acesso. Todos entram pela mesma página de login.
 
-| Usuário | Senha | Nível | Acesso |
-|---------|-------|-------|--------|
-| `admin` | `umasenhaboa` | Admin | Tudo + área administrativa |
-| `gerente1` | `loja1234` | Gerente | Somente Matriz — São Paulo |
-| `gerente2` | `loja1234` | Gerente | Somente Filial 1 — Rio de Janeiro |
-| `gerente3` | `loja1234` | Gerente | Somente Filial 2 — Belo Horizonte |
-| `gerente4` | `loja1234` | Gerente | Somente Filial 3 — Curitiba |
-| `gerente5` | `loja1234` | Gerente | Somente Filial 4 — Salvador |
-| `func1`–`func5` | `func1234` | Funcionário | Somente solicitações da própria loja |
+| Usuário    | Senha         | Nível   | Acesso                            |
+|------------|---------------|---------|-----------------------------------|
+| `admin`    | `umasenhaboa` | Admin   | Tudo + área administrativa        |
+| `gerente1` | `loja1234`    | Gerente | Somente Matriz — São Paulo        |
+| `gerente2` | `loja1234`    | Gerente | Somente Filial 1 — Rio de Janeiro |
+| `gerente3` | `loja1234`    | Gerente | Somente Filial 2 — Belo Horizonte |
+| `gerente4` | `loja1234`    | Gerente | Somente Filial 3 — Curitiba       |
+| `gerente5` | `loja1234`    | Gerente | Somente Filial 4 — Salvador       |
 
 **Comportamento por nível:**
 - **Admin** — acesso total: todas as lojas, área administrativa, metas, usuários e exportação
-- **Gerente** — vê apenas dados da própria loja; aprova solicitações de transferência recebidas; não acessa o admin
-- **Funcionário** — acessa apenas a tela de solicitações (reposição de estoque ou transferência entre lojas)
+- **Gerente** — vê apenas dados da própria loja; aprova solicitações de transferência recebidas; cria e gerencia contas de funcionários da sua loja; não acessa o admin
+- **Funcionário** — acessa apenas a tela de solicitações (reposição de estoque ou transferência entre lojas); conta criada pelo gerente da loja
 
 As senhas são armazenadas com hash **bcrypt** — nunca em texto plano.
 
@@ -172,14 +164,14 @@ As senhas são armazenadas com hash **bcrypt** — nunca em texto plano.
 
 ## 📊 Dados do Sistema
 
-| Item | Quantidade |
-|------|-----------|
-| Lojas | 5 (1 Matriz + 4 Filiais) |
-| Estados | SP, RJ, MG, PR, BA |
-| Produtos | 500 (100 por loja) |
-| Categorias | 10 (Motor, Freios, Suspensão, Elétrica, Customização, Proteção, Vestuário, Manutenção, Acessório, Segurança) |
-| Clientes | 115 distribuídos pelas 5 lojas |
-| Vendas registradas | 80 (Jan–Mar 2025) |
+| Item               | Quantidade                                                                                                   |
+|--------------------|--------------------------------------------------------------------------------------------------------------|
+| Lojas              | 5 (1 Matriz + 4 Filiais)                                                                                     |
+| Estados            | SP, RJ, MG, PR, BA                                                                                           |
+| Produtos           | 500 (100 por loja)                                                                                           |
+| Categorias         | 10 (Motor, Freios, Suspensão, Elétrica, Customização, Proteção, Vestuário, Manutenção, Acessório, Segurança) |
+| Clientes           | 115 distribuídos pelas 5 lojas                                                                               |
+| Vendas registradas | 1888 (Jan–Mar 2025)                                                                                          |
 
 ---
 
@@ -187,16 +179,16 @@ As senhas são armazenadas com hash **bcrypt** — nunca em texto plano.
 
 Gerada em `Admin → Exportar Excel`.
 
-| # | Aba | Conteúdo |
-|---|-----|----------|
-| 1 | **Lojas** | Matriz e filiais com cidade, estado e endereço |
-| 2 | **Produtos** | Catálogo completo com preço, estoque atual e valor em estoque |
-| 3 | **Previsão 6 Meses** | Média mensal, projeção mês a mês, quantidade a repor e receita prevista |
-| 4 | **Dashboard** | Todos os KPIs: clientes, vendas, receita por mês, por estado, por filial e por produto |
-| 5 | **Resumo por Loja** | Nº de vendas, quantidade total, receita e ticket médio por loja |
-| 6 | **Vendas** | Histórico completo com cliente, produto, quantidade e valor |
-| 7 | **Clientes** | Lista de clientes com e-mail e loja vinculada |
-| 8 | **Transferências** | Histórico de transferências de estoque entre lojas |
+| # | Aba                  | Conteúdo                                                                               |
+|---|----------------------|----------------------------------------------------------------------------------------|
+| 1 | **Lojas**            | Matriz e filiais com cidade, estado e endereço                                         |
+| 2 | **Produtos**         | Catálogo completo com preço, estoque atual e valor em estoque                          |
+| 3 | **Previsão 6 Meses** | Média mensal, projeção mês a mês, quantidade a repor e receita prevista                |
+| 4 | **Dashboard**        | Todos os KPIs: clientes, vendas, receita por mês, por estado, por filial e por produto |
+| 5 | **Resumo por Loja**  | Nº de vendas, quantidade total, receita e ticket médio por loja                        |
+| 6 | **Vendas**           | Histórico completo com cliente, produto, quantidade e valor                            |
+| 7 | **Clientes**         | Lista de clientes com e-mail e loja vinculada                                          |
+| 8 | **Transferências**   | Histórico de transferências de estoque entre lojas                                     |
 
 ---
 
@@ -210,11 +202,11 @@ Reposição sugerida = demanda prevista − estoque atual
 
 **Exemplo prático:**
 
-| Mês | Vendas |
-|-----|--------|
-| Janeiro | 10 |
-| Fevereiro | 20 |
-| Março | 30 |
+| Mês       | Vendas |
+|-----------|--------|
+| Janeiro   | 10     |
+| Fevereiro | 20     |
+| Março     | 30     |
 
 ```
 Média mensal = (10 + 20 + 30) ÷ 3 = 20 unidades/mês
@@ -239,11 +231,11 @@ A coluna **Repor** responde: *"Quantas unidades preciso comprar hoje para o esto
 
 ## 🛠️ Tecnologias
 
-| Tecnologia | Uso |
-|-----------|-----|
-| PHP 8.2 | Backend e lógica de negócio |
-| MySQL / MariaDB | Banco de dados |
-| Chart.js 4.4 | Gráficos interativos |
-| SpreadsheetML | Geração do arquivo Excel (.xls) |
-| HTML/CSS puro | Interface (sem frameworks) |
-| bcrypt | Hash de senhas |
+| Tecnologia      | Uso                             |
+|-----------------|---------------------------------|
+| PHP 8.2         | Backend e lógica de negócio     |
+| MySQL / MariaDB | Banco de dados                  |
+| Chart.js 4.4    | Gráficos interativos            |
+| SpreadsheetML   | Geração do arquivo Excel (.xls) |
+| HTML/CSS puro   | Interface (sem frameworks)      |
+| bcrypt          | Hash de senhas                  |
